@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Study Timer</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      /* Increase popup size like Volume Master */
+      body {
+        width: 380px;
+        height: 500px;
+        padding: 15px;
+        font-family: Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Work Timer</h2>
+
+    <input type="number" id="studyMinutes" placeholder="Minutes to study" />
+    <input type="number" id="breakMinutes" placeholder="Minutes for break" />
+    <input type="number" id="cycles" placeholder="Number of cycles" />
+
+    <button id="startStudy">Start Study Session</button>
+
+    <p id="status"></p>
+
+    <!-- ✅ FEATURE 2: Domain selection (checkbox + custom domains) -->
+    <div class="domain-config" style="margin-top: 20px;">
+      <h3>Site Limits</h3>
+
+      <label><input type="checkbox" id="chk_youtube" value="youtube.com"> YouTube</label><br>
+      <label><input type="checkbox" id="chk_netflix" value="netflix.com"> Netflix</label><br>
+
+      <div style="margin-top: 10px;">
+        <label>Custom domains (comma separated):</label><br>
+        <input type="text" id="customDomains" placeholder="e.g. reddit.com, instagram.com" style="width:100%;" />
+      </div>
+
+      <button id="saveDomains" style="margin-top: 10px;">Save Sites</button>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

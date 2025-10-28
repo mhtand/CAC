@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "FocusBuddy",
+  "version": "1.0",
+  "description": "Study timer with scheduled breaks and friendly site usage warnings for students.",
+  "permissions": ["tabs", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "FB_Icon_16.png",
+      "48": "FB_Icon_48.png",
+      "128": "FB_Icon_128.png"
+    }
+  },
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.netflix.com/*"
+  ],
+  "icons": {
+    "16": "FB_Icon_16.png",
+    "48": "FB_Icon_48.png",
+    "128": "FB_Icon_128.png"
+  }
+}
