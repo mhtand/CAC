@@ -1,4 +1,45 @@
-/* Empty for now — safe foundation */
 body {
-  font-family: Arial, sans-serif;
+    font-family: Arial, sans-serif;
+    width: 300px;
+    padding: 15px;
+}
+
+#sessionSiteSelect {
+    width: 100%;
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+#sessionSiteSelect option {
+    padding: 5px;
+    margin: 2px 0;
+}
+
+/* Make selected sites very obvious */
+#sessionSiteSelect option:checked {
+    background-color: #ff6b6b;
+    color: white;
+    font-weight: bold;
+}
+
+/* Style for the site input and add button */
+#newSiteInput {
+    width: calc(100% - 70px);
+    padding: 5px;
+    margin-right: 5px;
+}
+
+#addSiteBtn {
+    width: 60px;
+    padding: 5px;
+}
+
+/* Add visual indicator for blocked sites */
+.blocked-site-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #ff6b6b;
+    border-radius: 50%;
+    margin-right: 5px;
 }

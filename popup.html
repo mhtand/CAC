@@ -8,7 +8,7 @@
       /* Increase popup size like Volume Master */
       body {
         width: 380px;
-        height: 500px;
+        height: 50px;
         padding: 15px;
         font-family: Arial, sans-serif;
       }
@@ -21,24 +21,22 @@
     <input type="number" id="breakMinutes" placeholder="Minutes for break" />
     <input type="number" id="cycles" placeholder="Number of cycles" />
 
-    <button id="startStudy">Start Study Session</button>
+    <div style="margin-top:10px;">
+      <input type="text" id="newSiteInput" placeholder="Add site e.g. reddit.com" style="width: 60%;" />
+      <button id="addSiteBtn">Add</button>
+    </div>
+
+    <div style="margin-top:10px;">
+      <label for="sessionSiteSelect">Block these sites this session:</label><br>
+      <select id="sessionSiteSelect" multiple size="4" style="width:100%;"></select>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button id="startStudy">Start Study Session</button>
+      <button id="stopSession">Stop Session</button>
+    </div>
 
     <p id="status"></p>
-
-    <!-- ✅ FEATURE 2: Domain selection (checkbox + custom domains) -->
-    <div class="domain-config" style="margin-top: 20px;">
-      <h3>Site Limits</h3>
-
-      <label><input type="checkbox" id="chk_youtube" value="youtube.com"> YouTube</label><br>
-      <label><input type="checkbox" id="chk_netflix" value="netflix.com"> Netflix</label><br>
-
-      <div style="margin-top: 10px;">
-        <label>Custom domains (comma separated):</label><br>
-        <input type="text" id="customDomains" placeholder="e.g. reddit.com, instagram.com" style="width:100%;" />
-      </div>
-
-      <button id="saveDomains" style="margin-top: 10px;">Save Sites</button>
-    </div>
 
     <script src="popup.js"></script>
   </body>

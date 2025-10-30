@@ -1,14 +1,52 @@
-// --- TIMER FOUNDATION WITH BACKGROUND PERSISTENCE ---
+// --- TIMER + SESSION-SCOPED SITE SELECTION ---
 let uiInterval = null;
+
+function populateSiteDropdown(userSites) {
+    const select = document.getElementById('sessionSiteSelect');
+    select.innerHTML = '';
+    (userSites || []).forEach(site => {
+        const opt = document.createElement('option');
+        opt.value = site;
+        opt.textContent = site;
+        select.appendChild(opt);
+    });
+    enableSimpleMultiSelect(select);
+}
+
+function getSelectedSites() {
+    const sel = document.getElementById('sessionSiteSelect');
+    return Array.from(sel.selectedOptions).map(o => o.value);
+}
+
+document.getElementById('addSiteBtn').addEventListener('click', () => {
+    const input = document.getElementById('newSiteInput');
+    let value = (input.value || '').trim().toLowerCase();
+    if (!value) return;
+    // normalize
+    value = value.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    chrome.storage.local.get(['userSites'], (res) => {
+        const set = new Set(res.userSites || []);
+        set.add(value);
+        const userSites = Array.from(set).sort();
+        chrome.storage.local.set({ userSites }, () => {
+            populateSiteDropdown(userSites);
+            input.value = '';
+        });
+    });
+});
 
 document.getElementById('startStudy').addEventListener('click', () => {
     const minutes = parseInt(document.getElementById('studyMinutes').value);
     const breaks = parseInt(document.getElementById('breakMinutes').value);
     const cycles = parseInt(document.getElementById('cycles').value) || 1;
+    const selectedSites = getSelectedSites();
 
     if (isNaN(minutes) || minutes <= 0) {
         alert('Enter a valid study time.');
         return;
+    }
+    if (!selectedSites.length) {
+        if (!confirm('No sites selected to block. Start anyway?')) return;
     }
 
     const session = {
@@ -18,7 +56,8 @@ document.getElementById('startStudy').addEventListener('click', () => {
         phaseDuration: minutes * 60,
         studyDuration: minutes * 60,
         breakDuration: (isNaN(breaks) ? 0 : breaks) * 60,
-        cyclesLeft: cycles
+        cyclesLeft: cycles,
+        blockedDomains: selectedSites
     };
 
     chrome.storage.local.set({ session }, () => {
@@ -28,30 +67,21 @@ document.getElementById('startStudy').addEventListener('click', () => {
     document.getElementById('status').innerText = `Timer started...`;
 });
 
-// --- SAVE DOMAIN PREFERENCES ---
-document.getElementById('saveDomains').addEventListener('click', () => {
-    const domains = [];
-    if (document.getElementById('chk_youtube').checked) domains.push('youtube.com');
-    if (document.getElementById('chk_netflix').checked) domains.push('netflix.com');
-
-    const custom = document.getElementById('customDomains').value.trim();
-    if (custom) {
-        custom.split(',').map(s => s.trim()).forEach(d => domains.push(d));
-    }
-
-    chrome.storage.local.set({ trackedDomains: domains }, () => {
-        alert('Saved site settings.');
+document.getElementById('stopSession').addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'stopSession' }, () => {
+        chrome.storage.local.set({ session: { running: false } }, () => {
+            // Clear selection so user must select again next session
+            const sel = document.getElementById('sessionSiteSelect');
+            Array.from(sel.options).forEach(o => (o.selected = false));
+            document.getElementById('status').innerText = 'Not running';
+        });
     });
 });
 
-// --- RESTORE DOMAINS + SESSION ON POPUP OPEN ---
+// --- INIT ON POPUP OPEN ---
 document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get(['trackedDomains', 'session'], (res) => {
-        const tracked = res.trackedDomains || [];
-        document.getElementById('chk_youtube').checked = tracked.includes('youtube.com');
-        document.getElementById('chk_netflix').checked = tracked.includes('netflix.com');
-        document.getElementById('customDomains').value =
-            tracked.filter(d => d !== 'youtube.com' && d !== 'netflix.com').join(', ');
+    chrome.storage.local.get(['userSites', 'session'], (res) => {
+        populateSiteDropdown(res.userSites || []);
 
         const session = res.session;
         if (!session || !session.running) {
@@ -83,3 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     });
 });
+
+// Allow multi-select with simple clicks (no Ctrl/Cmd)
+function enableSimpleMultiSelect(selectEl) {
+    if (!selectEl || selectEl._simpleMultiEnabled) return;
+    selectEl.addEventListener('mousedown', function (e) {
+        if (e.target && e.target.tagName === 'OPTION') {
+            e.preventDefault();
+            const option = e.target;
+            option.selected = !option.selected;
+        }
+    });
+    selectEl._simpleMultiEnabled = true;
+}
