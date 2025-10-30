@@ -45,23 +45,25 @@ function enforceBlockingAcrossAllTabs() {
     });
 }
 
-// --- Alert (no blocking) with cooldown to prevent spam ---
-const alertCooldownMs = 20000; // 20s per tab+host
-const lastAlertByTabHost = {};
-
+// --- Alert (no blocking). Re-alert whenever user revisits restricted site during study ---
 function maybeAlertOnTab(tabId, host) {
-    const key = `${tabId}::${host}`;
-    const now = Date.now();
-    const last = lastAlertByTabHost[key] || 0;
-    if (now - last < alertCooldownMs) return;
-    lastAlertByTabHost[key] = now;
     chrome.scripting.executeScript({
         target: { tabId },
-        func: (message) => {
-            try { alert(message); } catch (e) {}
-        },
+        func: (message) => { try { alert(message); } catch (e) {} },
         args: ["You shouldn't be on this site right now..."]
     }).catch(() => {});
+}
+
+function showActiveTabAlert(message) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0]) {
+            chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                func: (m) => { try { alert(m); } catch (e) {} },
+                args: [message]
+            }).catch(() => {});
+        }
+    });
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -88,6 +90,8 @@ chrome.runtime.onMessage.addListener((msg, _, sendResponse) => {
             chrome.tabs.query({}, (tabs) => {
                 for (const t of tabs) enforceBlockingOnTab(t);
             });
+            // Alert once when any study phase starts
+            showActiveTabAlert('Work timer started');
         });
         sendResponse({ ok: true });
         return true;
@@ -120,8 +124,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 };
                 chrome.storage.local.set({ session: next }, () => {
                     chrome.alarms.create('phaseEnd', { when: next.phaseStart + next.phaseDuration * 1000 });
-                    alertAllTabs('Study phase ended. Break started.');
-                    // During break, alerts naturally won't fire due to phase check.
+                    // Alert once at break start
+                    showActiveTabAlert('On break');
                 });
             } else {
                 // No break: count cycle complete and either start next study or stop
@@ -136,13 +140,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     };
                     chrome.storage.local.set({ session: next }, () => {
                         chrome.alarms.create('phaseEnd', { when: next.phaseStart + next.phaseDuration * 1000 });
-                        alertAllTabs('Study phase ended. Next study cycle started.');
+                        // Alert each time a new study cycle starts
+                        showActiveTabAlert('Work timer started');
                         enforceBlockingAcrossAllTabs();
                     });
                 } else {
-                    chrome.storage.local.set({ session: { running: false } }, () => {
-                        alertAllTabs('Session completed.');
-                    });
+                    chrome.storage.local.set({ session: { running: false } }, () => {});
                 }
             }
         } else if (s.phase === 'break') {
@@ -157,26 +160,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 };
                 chrome.storage.local.set({ session: next }, () => {
                     chrome.alarms.create('phaseEnd', { when: next.phaseStart + next.phaseDuration * 1000 });
-                    alertAllTabs('Break ended. Study started.');
+                    // Alert each time a new study cycle starts
+                    showActiveTabAlert('Work timer started');
                     enforceBlockingAcrossAllTabs();
                 });
             } else {
-                chrome.storage.local.set({ session: { running: false } }, () => {
-                    alertAllTabs('Session completed.');
-                });
+                chrome.storage.local.set({ session: { running: false } }, () => {});
             }
         }
     });
 });
 
-function alertAllTabs(message) {
-    chrome.tabs.query({}, (tabs) => {
-        for (const t of tabs) {
-            chrome.scripting.executeScript({
-                target: { tabId: t.id },
-                func: (m) => alert(m),
-                args: [message]
-            }).catch(()=>{});
-        }
-    });
-}
+// Removed alertAllTabs to prevent repeated popups across tabs
