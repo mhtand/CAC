@@ -18,7 +18,7 @@ function getSelectedSites() {
     return Array.from(sel.selectedOptions).map(o => o.value);
 }
 
-document.getElementById('addSiteBtn').addEventListener('click', () => {
+function addSite() {
     const input = document.getElementById('newSiteInput');
     let value = (input.value || '').trim().toLowerCase();
     if (!value) return;
@@ -33,6 +33,21 @@ document.getElementById('addSiteBtn').addEventListener('click', () => {
             input.value = '';
         });
     });
+}
+
+document.getElementById('addSiteBtn').addEventListener('click', addSite);
+document.getElementById('newSiteInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addSite();
+});
+
+document.getElementById('clearSitesBtn').addEventListener('click', () => {
+    if (confirm('Clear all sites from your list? This cannot be undone.')) {
+        chrome.storage.local.set({ userSites: [] }, () => {
+            populateSiteDropdown([]);
+            const sel = document.getElementById('sessionSiteSelect');
+            Array.from(sel.options).forEach(o => (o.selected = false));
+        });
+    }
 });
 
 document.getElementById('startStudy').addEventListener('click', () => {
@@ -64,7 +79,9 @@ document.getElementById('startStudy').addEventListener('click', () => {
         chrome.runtime.sendMessage({ action: 'startSession', session });
     });
 
-    document.getElementById('status').innerText = `Timer started...`;
+    const statusEl = document.getElementById('status');
+    statusEl.innerText = `Timer started...`;
+    statusEl.style.color = '#667eea';
 });
 
 document.getElementById('stopSession').addEventListener('click', () => {
@@ -73,7 +90,9 @@ document.getElementById('stopSession').addEventListener('click', () => {
             // Clear selection so user must select again next session
             const sel = document.getElementById('sessionSiteSelect');
             Array.from(sel.options).forEach(o => (o.selected = false));
-            document.getElementById('status').innerText = 'Not running';
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = 'Not running';
+            statusEl.style.color = '#718096';
         });
     });
 });
@@ -92,23 +111,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = Date.now();
         const phaseEnd = session.phaseStart + session.phaseDuration * 1000;
         let remaining = Math.max(0, Math.floor((phaseEnd - now) / 1000));
-        document.getElementById('status').innerText =
-            `${session.phase === 'study' ? 'Study' : 'Break'} • ${Math.floor(remaining/60)}:${(remaining%60).toString().padStart(2,'0')}`;
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = `${session.phase === 'study' ? 'Study' : 'Break'} • ${Math.floor(remaining/60)}:${(remaining%60).toString().padStart(2,'0')}`;
+        statusEl.style.color = session.phase === 'study' ? '#667eea' : '#48bb78';
 
         if (uiInterval) clearInterval(uiInterval);
         uiInterval = setInterval(() => {
             chrome.storage.local.get('session', (r) => {
                 const s = r.session;
                 if (!s || !s.running) {
-                    document.getElementById('status').innerText = 'Not running';
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerText = 'Not running';
+                    statusEl.style.color = '#718096';
                     clearInterval(uiInterval);
                     return;
                 }
                 const now2 = Date.now();
                 const end = s.phaseStart + s.phaseDuration * 1000;
                 let rem = Math.max(0, Math.floor((end - now2) / 1000));
-                document.getElementById('status').innerText =
-                    `${s.phase === 'study' ? 'Study' : 'Break'} • ${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')}`;
+                const statusEl = document.getElementById('status');
+                statusEl.innerText = `${s.phase === 'study' ? 'Study' : 'Break'} • ${Math.floor(rem/60)}:${(rem%60).toString().padStart(2,'0')}`;
+                statusEl.style.color = s.phase === 'study' ? '#667eea' : '#48bb78';
             });
         }, 1000);
     });

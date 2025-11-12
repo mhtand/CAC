@@ -4,39 +4,41 @@
     <title>Study Timer</title>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css">
-    <style>
-      /* Increase popup size like Volume Master */
-      body {
-        width: 380px;
-        height: 50px;
-        padding: 15px;
-        font-family: Arial, sans-serif;
-      }
-    </style>
   </head>
   <body>
-    <h2>Work Timer</h2>
+    <div class="container">
+      <div class="header">
+        <h1>📚 Focus Timer</h1>
+        <p id="status" class="status">Not running</p>
+      </div>
 
-    <input type="number" id="studyMinutes" placeholder="Minutes to study" />
-    <input type="number" id="breakMinutes" placeholder="Minutes for break" />
-    <input type="number" id="cycles" placeholder="Number of cycles" />
+      <div class="section">
+        <h3>Timer Settings</h3>
+        <div class="input-group">
+          <input type="number" id="studyMinutes" placeholder="Study (minutes)" />
+          <input type="number" id="breakMinutes" placeholder="Break (minutes)" />
+          <input type="number" id="cycles" placeholder="Cycles" />
+        </div>
+      </div>
 
-    <div style="margin-top:10px;">
-      <input type="text" id="newSiteInput" placeholder="Add site e.g. reddit.com" style="width: 60%;" />
-      <button id="addSiteBtn">Add</button>
+      <div class="section">
+        <h3>Blocked Sites</h3>
+        <div class="add-site-group">
+          <input type="text" id="newSiteInput" placeholder="e.g. reddit.com" />
+          <button id="addSiteBtn" class="btn-secondary">Add</button>
+        </div>
+        <div class="site-list-header">
+          <label for="sessionSiteSelect">Select sites to block this session:</label>
+          <button id="clearSitesBtn" class="btn-clear">Clear List</button>
+        </div>
+        <select id="sessionSiteSelect" multiple size="4"></select>
+      </div>
+
+      <div class="button-group">
+        <button id="startStudy" class="btn-primary">Start Study Session</button>
+        <button id="stopSession" class="btn-stop">Stop Session</button>
+      </div>
     </div>
-
-    <div style="margin-top:10px;">
-      <label for="sessionSiteSelect">Block these sites this session:</label><br>
-      <select id="sessionSiteSelect" multiple size="4" style="width:100%;"></select>
-    </div>
-
-    <div style="margin-top:10px; display:flex; gap:8px;">
-      <button id="startStudy">Start Study Session</button>
-      <button id="stopSession">Stop Session</button>
-    </div>
-
-    <p id="status"></p>
 
     <script src="popup.js"></script>
   </body>
